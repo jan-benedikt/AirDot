@@ -91,7 +91,7 @@ static constexpr InitCommand INIT_SEQUENCE[] = {
     INIT(0xFF, D_FF_13),       INIT(0xE8, D_E8_0E),       INIT_NOARGS_DELAY(0x11, 120),
     INIT_DELAY(0xE8, D_E8_0C, 10), INIT(0xE8, D_E8_00),   INIT(0xE6, D_E6_167C),
     INIT(0xFF, D_FF_00),       INIT(0x3A, D_3A),          INIT(0x36, D_36),
-    INIT(0xC7, D_C7),          INIT_NOARGS(0x20),         INIT_NOARGS(0x29),
+    INIT(0xC7, D_C7),          INIT_NOARGS(0x20),         INIT_NOARGS_DELAY(0x29, 20),
 };
 
 #undef INIT
@@ -124,11 +124,11 @@ void Nhd21480480AfAsxp::setup_control_pins_() {
   this->init_sda_pin_->digital_write(true);
 
   this->reset_pin_->digital_write(true);
-  delay(5);
+  delay(20);
   this->reset_pin_->digital_write(false);
-  delay(5);
+  delay(20);
   this->reset_pin_->digital_write(true);
-  delay(120);
+  delay(150);
 }
 
 void Nhd21480480AfAsxp::write_16bit_word_(uint16_t value) {
@@ -206,7 +206,7 @@ void Nhd21480480AfAsxp::common_setup_() {
 
   esp_lcd_rgb_panel_config_t config{};
   config.flags.fb_in_psram = 1;
-  config.bounce_buffer_size_px = this->width_ * 20;
+  config.bounce_buffer_size_px = this->width_ * 30;
   config.dma_burst_size = 64;
   config.num_fbs = 1;
   config.timings.h_res = this->width_;
@@ -242,7 +242,28 @@ void Nhd21480480AfAsxp::common_setup_() {
     err = esp_lcd_panel_init(this->handle_);
   if (err != ESP_OK) {
     this->mark_failed();
+    return;
   }
+
+  this->clear_panel_framebuffer_();
+}
+
+void Nhd21480480AfAsxp::clear_panel_framebuffer_() {
+  if (this->handle_ == nullptr || !this->check_buffer_())
+    return;
+
+  std::fill_n(this->buffer_, this->width_ * this->height_, uint16_t{0});
+  const esp_err_t err = esp_lcd_panel_draw_bitmap(
+      this->handle_, 0, 0, this->width_, this->height_, reinterpret_cast<const uint8_t *>(this->buffer_));
+  if (err == ESP_OK)
+    this->status_clear_warning();
+  else
+    this->status_set_warning();
+
+  this->x_low_ = this->width_;
+  this->y_low_ = this->height_;
+  this->x_high_ = 0;
+  this->y_high_ = 0;
 }
 
 void Nhd21480480AfAsxp::update() {

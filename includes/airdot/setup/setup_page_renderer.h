@@ -160,7 +160,7 @@ class SetupPageRenderer {
     const bool time_server_enabled = wifi_configured && stored_time_server_enabled && !manual_time_enabled;
     const bool manual_time_mode = time_sync_enabled && (manual_time_enabled || !wifi_configured);
     const bool weather_enabled = wifi_configured && stored_weather_enabled;
-    const bool default_online_weather_enabled = !weather_setting_stored;
+    const bool default_online_weather_enabled = !weather_setting_stored || !wifi_configured;
     const bool local_time_enabled = time_server_enabled || manual_time_mode;
     const bool ha_discovery_enabled = wifi_configured && stored_ha_discovery_enabled;
     const bool mqtt_enabled = wifi_configured && stored_mqtt_enabled;
@@ -369,6 +369,7 @@ class SetupPageRenderer {
     .time-source-mode[hidden],
     .manual-time-fields[hidden],
     .exact-location-fields[hidden],
+    .flight-radar-fields[hidden],
     .weather-location-mode[hidden] {
       display: none;
     }
@@ -1113,7 +1114,7 @@ class SetupPageRenderer {
     html += text.sen66_temperature_offset_label;
     html += R"html(</label>
                 <div class="unit-input">
-                  <input id="sen66_temperature_offset_c" name="sen66_temperature_offset_c" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="5" pattern="[0-9]{1,2}([.,][0-9])?" value=")html";
+                  <input id="sen66_temperature_offset_c" name="sen66_temperature_offset_c" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="5" pattern="[0-9]{1,2}([.,][0-9]{1,2})?" value=")html";
     html += html_escape_(sen66_temperature_offset_value);
     html += R"html(">
                   <span class="unit-suffix" aria-hidden="true">°C</span>
@@ -1126,7 +1127,7 @@ class SetupPageRenderer {
     html += text.sen66_co2_reference_label;
     html += R"html(</label>
                 <div class="unit-input">
-                  <input id="sen66_co2_reference_ppm" name="sen66_co2_reference_ppm" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="4" pattern="[0-9]{3,4}" value="400">
+                  <input id="sen66_co2_reference_ppm" name="sen66_co2_reference_ppm" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="4" pattern="[0-9]{3,4}" value="427">
                   <span class="unit-suffix" aria-hidden="true">ppm</span>
                 </div>
               </div>
@@ -1476,7 +1477,7 @@ class SetupPageRenderer {
     html += "                  <label for=\"location_latitude\" data-i18n=\"location_latitude_label\">";
     html += text.location_latitude_label;
     html += R"html(</label>
-                  <input id="location_latitude" name="location_latitude" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="next" maxlength="18" pattern="-?[0-9]{1,2}([.,][0-9]{1,7})?" value=")html";
+                  <input id="location_latitude" name="location_latitude" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="next" maxlength="18" pattern="-?[0-9]{1,2}([.,][0-9]{1,7})?" value=")html";
     html += html_escape_(exact_location_latitude_value);
     html += "\"";
     if (wifi_configured && exact_location_enabled)
@@ -1490,7 +1491,7 @@ class SetupPageRenderer {
     html += "                  <label for=\"location_longitude\" data-i18n=\"location_longitude_label\">";
     html += text.location_longitude_label;
     html += R"html(</label>
-                  <input id="location_longitude" name="location_longitude" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" maxlength="18" pattern="-?[0-9]{1,3}([.,][0-9]{1,7})?" value=")html";
+                  <input id="location_longitude" name="location_longitude" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" maxlength="18" pattern="-?[0-9]{1,3}([.,][0-9]{1,7})?" value=")html";
     html += html_escape_(exact_location_longitude_value);
     html += "\"";
     if (wifi_configured && exact_location_enabled)
@@ -1633,6 +1634,9 @@ class SetupPageRenderer {
               <div id="flight_radar_fields" class="flight-radar-fields)html";
     if (!flight_radar_active)
       html += " is-disabled";
+    html += "\"";
+    if (!flight_radar_active)
+      html += " hidden";
     html += R"html(">
                 <div class="field">
 )html";
@@ -2116,7 +2120,10 @@ class SetupPageRenderer {
               setDisabledClass(flightRadarSection, !online);
               setDisabledClass(flightRadarEnabledRow, !online);
               if (flightRadarEnabledInput) flightRadarEnabledInput.disabled = !online;
-              if (flightRadarFields) flightRadarFields.classList.toggle("is-disabled", !active);
+              if (flightRadarFields) {
+                flightRadarFields.hidden = !active;
+                flightRadarFields.classList.toggle("is-disabled", !active);
+              }
               if (flightRadarRangeInput) flightRadarRangeInput.disabled = !active;
               setDisabled(flightRadarTrafficInputs, !active);
               updateFlightRadarRangeLabels();
@@ -2814,7 +2821,7 @@ class SetupPageRenderer {
 
   static std::string temperature_offset_input_value_(float offset_celsius) {
     char text[8];
-    std::snprintf(text, sizeof(text), "%.1f", static_cast<double>(std::fabs(offset_celsius)));
+    std::snprintf(text, sizeof(text), "%.2f", static_cast<double>(std::fabs(offset_celsius)));
     return std::string(text);
   }
 

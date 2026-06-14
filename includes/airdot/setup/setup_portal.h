@@ -201,7 +201,8 @@ class SetupHandler : public AsyncWebHandler {
     save_ui_language(selected_ui_language);
     save_time_server_enabled(time_server_enabled);
     save_manual_time_enabled(manual_time_valid);
-    save_weather_enabled(weather_enabled);
+    if (wifi_enabled)
+      save_weather_enabled(weather_enabled);
     save_flight_radar_settings(flight_radar_enabled, flight_radar_range_km, flight_radar_military_only);
     save_home_assistant_discovery_enabled(ha_discovery_enabled);
     save_unit_system(request->hasArg("units") && request->arg("units") == "imperial" ? UNIT_SYSTEM_IMPERIAL
@@ -259,7 +260,7 @@ class SetupHandler : public AsyncWebHandler {
     if (this->pending_sen66_co2_calibration_ != nullptr && this->pending_sen66_co2_reference_ppm_ != nullptr) {
       *this->pending_sen66_co2_calibration_ = request->hasArg("sen66_force_co2_calibration") ? 1 : 0;
       *this->pending_sen66_co2_reference_ppm_ =
-          parse_bounded_uint16_(bounded_arg_(request, "sen66_co2_reference_ppm", 5), 400, 400, 2000);
+          parse_bounded_uint16_(bounded_arg_(request, "sen66_co2_reference_ppm", 5), 427, 400, 2000);
     }
     if (mqtt_enabled) {
       const auto &existing_mqtt_settings = load_mqtt_settings();

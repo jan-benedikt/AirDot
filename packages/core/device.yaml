@@ -96,28 +96,22 @@ esphome:
             then:
               - wifi.enable:
         - delay: 500ms
-        - component.update: display_panel
         - script.execute: ui_apply_display_theme
         - script.execute: ui_refresh_flight_radar_page
         - component.update: barometric_pressure_sensor
         - component.update: sen66_air_quality_sensor
+        - script.execute: ui_refresh_air_quality_summary
         - if:
             condition:
               lambda: "return !AirDot::onboarding::load_first_run_onboarding_complete();"
             then:
               - delay: 500ms
-              - component.update: display_panel
-              - lambda: |-
-                  AirDot::onboarding::apply_display_brightness(
-                    id(display_backlight), id(ambient_light_sensor).state,
-                    ${display_auto_dim_min_lux}, ${display_auto_dim_max_lux},
-                    ${display_auto_dim_min_brightness});
-            else:
-              - lambda: |-
-                  AirDot::onboarding::apply_display_brightness(
-                    id(display_backlight), id(ambient_light_sensor).state,
-                    ${display_auto_dim_min_lux}, ${display_auto_dim_max_lux},
-                    ${display_auto_dim_min_brightness});
-        - script.execute: ui_refresh_air_quality_summary
+        - component.update: display_panel
+        - delay: 100ms
+        - lambda: |-
+            AirDot::onboarding::apply_display_brightness(
+              id(display_backlight), id(ambient_light_sensor).state,
+              ${display_auto_dim_min_lux}, ${display_auto_dim_max_lux},
+              ${display_auto_dim_min_brightness});
         - delay: 2s
         - script.execute: sen66_apply_temperature_offset

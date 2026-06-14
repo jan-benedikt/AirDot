@@ -53,6 +53,7 @@ class Nhd21480480AfAsxp : public display::Display {
  protected:
   void common_setup_();
   bool check_buffer_();
+  void clear_panel_framebuffer_();
   void setup_control_pins_();
   void write_16bit_register_(uint16_t address, uint8_t value, bool is_data);
   void write_16bit_word_(uint16_t value);
@@ -87,7 +88,7 @@ class Nhd21480480AfAsxp : public display::Display {
   uint16_t y_low_{1};
   uint16_t x_high_{0};
   uint16_t y_high_{0};
-  bool screen_powered_{true};
+  bool screen_powered_{false};
   esp_lcd_panel_handle_t handle_{};
 };
 
