@@ -3,7 +3,7 @@ lvgl:
     - display_panel
   byte_order: little_endian
   buffer_size: 25%
-  update_interval: 100ms
+  update_interval: 200ms
   default_font: ui_font_large
   theme:
     dark_mode: true

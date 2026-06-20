@@ -9,7 +9,7 @@ display_backlight_pin: GPIO44
 alert_buzzer_pin: GPIO7
 button_page_pin: GPIO6
 
-display_panel_pclk_frequency: 14MHz
+display_panel_pclk_frequency: 13MHz
 
 mqtt_default_topic_prefix: airdot
 ha_sensor_update_interval: 10s
