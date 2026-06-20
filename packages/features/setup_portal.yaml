@@ -93,6 +93,14 @@ globals:
     initial_value: '""'
 
 script:
+  - id: setup_display_restore_bandwidth
+    mode: restart
+    then:
+      - lambda: |-
+          id(display_panel).set_low_bandwidth_mode(false);
+          if (lv_screen_active() != nullptr)
+            lv_obj_invalidate(lv_screen_active());
+
   - id: setup_ap_start
     mode: restart
     then:
@@ -100,6 +108,7 @@ script:
           AirDot::onboarding::pause_mqtt_for_network_change(id(mqtt_client));
           AirDot::onboarding::pause_home_assistant_api_for_network_change(id(home_assistant_api));
           id(setup_ap_active) = 1;
+          id(display_panel).set_low_bandwidth_mode(true);
           AirDot::onboarding::refresh_setup_network_scan_cache();
       - delay: 750ms
       - lambda: |-
@@ -119,6 +128,8 @@ script:
           id(setup_ap_active) = 0;
       - delay: 150ms
       - wifi.disable:
+      - delay: 100ms
+      - script.execute: setup_display_restore_bandwidth
 
   - id: setup_portal_start
     mode: restart
@@ -174,6 +185,7 @@ script:
                   lambda: "return AirDot::onboarding::has_saved_wifi_settings();"
                 then:
                   - wifi.enable:
+      - script.execute: setup_display_restore_bandwidth
       - lambda: |-
           AirDot::onboarding::restore_home_assistant_api(id(home_assistant_api));
 
@@ -218,6 +230,7 @@ script:
                   - wifi.disable:
                   - delay: 100ms
                   - wifi.enable:
+                  - script.execute: setup_display_restore_bandwidth
                 else:
                   - if:
                       condition:
@@ -237,6 +250,7 @@ script:
                               lambda: "return AirDot::onboarding::has_saved_wifi_settings();"
                             then:
                               - wifi.enable:
+                        - script.execute: setup_display_restore_bandwidth
                       else:
                         - lambda: |-
                             AirDot::onboarding::forget_saved_wifi_settings();
@@ -570,7 +584,11 @@ script:
                   id(display_backlight), id(ambient_light_sensor).state,
                   ${display_auto_dim_min_lux}, ${display_auto_dim_max_lux},
                   ${display_auto_dim_min_brightness});
-      - script.execute: setup_portal_start
+      - if:
+          condition:
+            lambda: "return id(onboarding_ui_screen) != AirDot::onboarding::SETUP_LANGUAGE;"
+          then:
+            - script.execute: setup_portal_start
 
   - id: onboarding_short_press_action
     mode: restart
